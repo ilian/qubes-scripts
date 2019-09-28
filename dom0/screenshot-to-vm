@@ -1,0 +1,34 @@
+#!/usr/bin/env sh
+#
+# Take a screenshot in dom0 and move it to the desired VM.
+# Click on the window to screenshot once to capture a whole X window
+# Click and drag your cursor to draw a rectangular region to capture
+
+set -euxo pipefail  # Exit on error
+local_path=$(mktemp --suffix=".png")  # Allocate file path to write screenshot to
+import "$local_path"  # Take screenshot in dom0
+target=$(
+qvm-ls --raw-data |  # List all VMs
+awk -F '|' '$3 != "TemplateVM" && $3 != "AdminVM" {print $1}' |  # Filter templates and dom0
+
+# Ask user to select target VM
+xargs zenity --title Screenshot --height 500 --list --column="Name" \
+             --text "Select a target DomU to copy screenshot"
+)
+qvm-move-to-vm $target "$local_path"  # Move screenshot from dom0 to target
+
+vm_dir="/home/user/QubesIncoming/dom0"
+vm_path="$vm_dir/$(basename $local_path)"
+
+if qvm-run $target "command -v xclip"; then
+  # Copy screenshot to VM's clipboard if xclip is installed
+  # &> /dev/null needed to avoid xclip hanging
+  qvm-run $target "xclip -selection clipboard -t image/png -i \"$vm_path\" &> /dev/null"
+  qvm-run $target "rm $vm_path"
+  notify-send "$target: Copied screenshot to VM's clipboard"
+else
+  # Show folder containing screenshot in target VM if xclip is not installed
+  qvm-run $target "xdg-open $vm_dir"
+  notify-send "$target: Screenshot saved at $vm_path (reason: xclip not present)"
+fi
+
