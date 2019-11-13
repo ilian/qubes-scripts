@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+set -x
+
+TEMP_MOUNT=/mnt/vm
+DEST=/mnt/usb/vms
+mkdir -p "$TEMP_MOUNT"
+mkdir -p "$DEST"
+
+for vm in `ls /dev/mapper/qubes_dom0-vm--*--private`; do
+  mount "$vm" "$TEMP_MOUNT"
+  DEST_VM_DIR="$DEST"/"$(basename "$vm" | sed "s/^qubes_dom0-vm--//")"
+  cp -r "$TEMP_MOUNT"/ "$DEST_VM_DIR"
+  umount "$TEMP_MOUNT"
+done
+

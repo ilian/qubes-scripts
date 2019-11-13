@@ -1,0 +1,23 @@
+#!/usr/bin/env sh
+set -x
+set -e
+
+VMS=/mnt/usb/vms
+TEMP_MOUNT=/mnt/vm
+USER=1000
+
+mkdir -p "$TEMP_MOUNT"
+
+for vm in `ls "$VMS"`; do
+  read -p "Enter VM name to restore \'$vm\' to: " TARGET_VM
+  if [ -z "$TARGET_VM" ]; then
+    continue
+  fi
+  mount "/dev/mapper/qubes_dom0-vm--$(echo "$TARGET_VM" | sed 's/-/--/g')--private" "$TEMP_MOUNT"
+  cp -r "$VMS/$vm/home/user" "$TEMP_MOUNT/home/"
+  find "$TEMP_MOUNT/home/user" -print0 | xargs -0 chown $USER:qubes
+  umount "$TEMP_MOUNT"
+done
+
+rmdir "$TEMP_MOUNT"
+
