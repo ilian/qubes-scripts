@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -eo pipefail
+
+vm="$1"
+files=("$2")
+
+usage() {
+  echo "Usage: $(basename $0) VM FILE..." >&2
+  exit 1
+}
+
+if [ "$#" -lt 2 ]; then
+  echo "error: not enough arguments provided" >&2
+  usage
+fi
+
+dest="$(pwd)"
+echo "This command will copy the following files from VM $vm to $dest in dom0:" >&2
+printf '%s\n' "${files[@]}" >&2
+
+echo "This is a dangerous operation, especially if the source VM has been compromised." >&2
+read -p "Are you sure you want to continue? [y/N]:"
+
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+  for f in "${files[@]}"; do
+    echo "Copying $f" >&2
+    qvm-run --pass-io "$vm" "tar -cC \"\$(dirname \"$f\")\" \"\$(basename \"$f\")\"" | tar x -C "$dest"
+  done
+else
+  echo "Operation aborted. Good call." >&2
+fi
+

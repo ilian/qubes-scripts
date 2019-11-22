@@ -1,5 +1,12 @@
 # Dom0 setup
 
+## Copy files and directories from a VM to dom0
+Copy the [qvm-copy-to-dom0](qvm-copy-to-dom0) script to dom0.
+This script will ask the user before the operation due to its potential security implications.
+```
+Usage: qvm-copy-to-dom0 VM FILE...
+```
+
 ### Take screenshots
 Copy the [screenshot-to-vm](screenshot-to-vm) script to dom0.
 Running this script will prompt you to either click a window or draw a rectangular area to capture and
